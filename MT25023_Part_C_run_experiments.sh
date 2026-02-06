@@ -2,10 +2,6 @@
 
 set -e
 
-#############################################
-# CONFIG
-#############################################
-
 sizes=(64 512 4096 65536)
 threads=(1 2 4 8)
 impls=(A1 A2 A3)
@@ -18,9 +14,6 @@ OUT="MT25023_Part_C_results.csv"
 NS_SERVER=ns_server
 NS_CLIENT=ns_client
 
-#############################################
-# CLEAN PREVIOUS STATE
-#############################################
 
 echo "Cleaning old state..."
 
@@ -32,33 +25,17 @@ sudo ip netns delete $NS_SERVER 2>/dev/null || true
 sudo ip netns delete $NS_CLIENT 2>/dev/null || true
 sudo ip link delete veth0 2>/dev/null || true
 
-#############################################
-# BUILD
-#############################################
-
 echo "Building..."
 make clean
 make
 
-#############################################
-# CSV HEADER
-#############################################
-
-echo "impl,size,threads,throughput,latency,cycles,l1_misses,llc_misses,cs" > $OUT
-
-#############################################
-# EXPERIMENT LOOP
-#############################################
+echo "impl,size,threads,throughput(Gbps),latency(us),cycles,l1_misses,llc_misses,cs" > $OUT
 
 for impl in "${impls[@]}"; do
 for s in "${sizes[@]}"; do
 for t in "${threads[@]}"; do
 
     echo "Running $impl | size=$s | threads=$t"
-
-    #########################################
-    # setup fresh namespaces
-    #########################################
 
     sudo ip netns delete $NS_SERVER 2>/dev/null || true
     sudo ip netns delete $NS_CLIENT 2>/dev/null || true
@@ -79,16 +56,8 @@ for t in "${threads[@]}"; do
     sudo ip netns exec $NS_SERVER ip link set veth0 up
     sudo ip netns exec $NS_CLIENT ip link set veth1 up
 
-    #########################################
-    # start server (background)
-    #########################################
-
     sudo ip netns exec $NS_SERVER ./server_$impl $PORT $s $t &
     sleep 1
-
-    #########################################
-    # run client + perf
-    #########################################
 
     sudo ip netns exec $NS_CLIENT \
     perf stat -x, \
@@ -98,10 +67,6 @@ for t in "${threads[@]}"; do
       -e context-switches \
       ./client_$impl 10.0.0.1 $PORT $DURATION $s \
       > out.txt 2> perf.txt
-
-    #########################################
-    # parse metrics
-    #########################################
 
     thr=$(grep Throughput out.txt | awk '{print $2}')
     lat=$(grep Latency out.txt | awk '{print $2}')
@@ -113,11 +78,6 @@ for t in "${threads[@]}"; do
 
     echo "$impl,$s,$t,$thr,$lat,$cycles,$l1,$llc,$cs" >> $OUT
 
-    #########################################
-    # CLEANUP (IMPORTANT FIX)
-    #########################################
-
-    # kill entire namespace (no wait!)
     sudo ip netns delete $NS_SERVER 2>/dev/null || true
     sudo ip netns delete $NS_CLIENT 2>/dev/null || true
     sudo ip link delete veth0 2>/dev/null || true
@@ -128,3 +88,5 @@ done
 
 echo "Done."
 echo "Results saved to $OUT"
+
+python3 MT25023_Part_D_plots.py
