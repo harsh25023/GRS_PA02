@@ -154,3 +154,26 @@ run_A3_ns: ns_clean ns_setup server_A3 client_A3
 	sudo ip netns exec ns_client ./client_A3 10.0.0.1 9000 5 4096; \
 	kill $$pid 2>/dev/null || true
 
+
+#########################################################
+# Part B : perf profiling helpers (single-run demo)
+#########################################################
+
+PERF_EVENTS = cycles,cpu_core/L1-dcache-load-misses/,cpu_core/cache-misses/,context-switches
+
+.PHONY: perf_A1 perf_A2 perf_A3
+
+perf_A1: client_A1
+	sudo ip netns exec ns_client \
+	perf stat -e $(PERF_EVENTS) \
+	./client_A1 10.0.0.1 $(PORT) $(DUR) $(SIZE)
+
+perf_A2: client_A2
+	sudo ip netns exec ns_client \
+	perf stat -e $(PERF_EVENTS) \
+	./client_A2 10.0.0.1 $(PORT) $(DUR) $(SIZE)
+
+perf_A3: client_A3
+	sudo ip netns exec ns_client \
+	perf stat -e $(PERF_EVENTS) \
+	./client_A3 10.0.0.1 $(PORT) $(DUR) $(SIZE)
