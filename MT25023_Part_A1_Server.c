@@ -13,17 +13,11 @@ typedef struct {
 } args_t;
 
 
-/* -----------------------------
-   thread control (runtime limit)
-   ----------------------------- */
 static int active_threads = 0;
 static int max_threads = 0;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 
-/* -----------------------------
-   safe recv (full message)
-   ----------------------------- */
 static int recv_all(int fd, char *buf, size_t n)
 {
     size_t rcv = 0;
@@ -39,9 +33,6 @@ static int recv_all(int fd, char *buf, size_t n)
 }
 
 
-/* -----------------------------
-   safe send (full message)
-   ----------------------------- */
 static int send_all(int fd, char *buf, size_t n)
 {
     size_t sent = 0;
@@ -57,9 +48,7 @@ static int send_all(int fd, char *buf, size_t n)
 }
 
 
-/* -----------------------------
-   per-client thread
-   ----------------------------- */
+
 void *handler(void *arg)
 {
     args_t *a = arg;
@@ -67,7 +56,6 @@ void *handler(void *arg)
     int fd = a->fd;
     size_t size = a->size;
 
-    /* REQUIRED: structure with 8 heap fields */
     message_t msg;
     msg_init(&msg, size);
 
@@ -75,11 +63,11 @@ void *handler(void *arg)
 
     while (1)
     {
-        /* request */
+       
         if (recv_all(fd, buf, size) < 0)
             break;
 
-        /* prepare reply using structured fields */
+    
         size_t off = 0;
 
         for (int i = 0; i < FIELDS; i++)
@@ -88,7 +76,7 @@ void *handler(void *arg)
             off += msg.field_size;
         }
 
-        /* response */
+        
         if (send_all(fd, buf, size) < 0)
             break;
     }
@@ -107,9 +95,7 @@ void *handler(void *arg)
 }
 
 
-/* -----------------------------
-   main server
-   ----------------------------- */
+
 int main(int argc, char **argv)
 {
     if (argc < 4)
@@ -146,7 +132,7 @@ int main(int argc, char **argv)
 
         if (active_threads >= max_threads)
         {
-            close(cfd);  // enforce thread cap
+            close(cfd); 
             pthread_mutex_unlock(&lock);
             continue;
         }

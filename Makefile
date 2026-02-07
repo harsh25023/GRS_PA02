@@ -70,11 +70,6 @@ demo:
 
 
 
-
-# =========================================================
-# Namespace helpers (easy manual + auto runs)
-# =========================================================
-
 NS_SERVER=ns_server
 NS_CLIENT=ns_client
 PORT=9000
@@ -83,9 +78,7 @@ THREADS=2
 DUR=5
 
 
-# =========================================================
-# Namespace helpers
-# =========================================================
+
 
 .PHONY: ns_setup ns_clean server_A1_ns client_A1_ns run_A1_ns server_A2_ns client_A2_ns run_A2_ns
 
@@ -108,9 +101,6 @@ ns_setup:
 	sudo ip netns exec ns_client ip link set veth1 up
 
 
-# -------------------------
-# Server only (no setup)
-# -------------------------
 server_A1_ns: server_A1
 	sudo ip netns exec ns_server ./server_A1 9000 4096 3
 
@@ -122,9 +112,6 @@ server_A3_ns: server_A3
 
 
 
-# -------------------------
-# Client only (no setup)
-# -------------------------
 client_A1_ns: client_A1
 	sudo ip netns exec ns_client ./client_A1 10.0.0.1 9000 5 4096
 
@@ -135,9 +122,6 @@ client_A3_ns: client_A3
 	sudo ip netns exec ns_client ./client_A3 10.0.0.1 9000 5 4096
 
 
-# -------------------------
-# All-in-one (recommended)
-# -------------------------
 run_A1_ns: ns_clean ns_setup server_A1 client_A1
 	sudo ip netns exec ns_server ./server_A1 9000 4096 3 & \
 	pid=$$!; sleep 2; \
@@ -157,9 +141,6 @@ run_A3_ns: ns_clean ns_setup server_A3 client_A3
 	kill $$pid 2>/dev/null || true
 
 
-#########################################################
-# Part B : perf profiling helpers (single-run demo)
-#########################################################
 
 PERF_EVENTS = cycles,cpu_core/L1-dcache-load-misses/,cpu_core/cache-misses/,context-switches
 

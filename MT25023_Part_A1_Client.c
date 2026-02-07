@@ -29,7 +29,6 @@ int main(int argc, char **argv)
 
     printf("[A1] Connected to server\n");
 
-    /* send continuously for duration */
     run_latency_test(fd, size, duration);
 
     close(fd);

@@ -6,11 +6,6 @@
 
 #define FIELDS 8
 
-/*
-   REQUIRED BY ASSIGNMENT:
-
-   "structure comprising 8 dynamically allocated string fields"
-*/
 
 typedef struct {
     char *field[FIELDS];
@@ -18,7 +13,6 @@ typedef struct {
 } message_t;
 
 
-/* allocate 8 independent heap buffers */
 static inline void msg_init(message_t *m, size_t total_size)
 {
     m->field_size = total_size / FIELDS;

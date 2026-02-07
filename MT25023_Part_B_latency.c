@@ -28,10 +28,10 @@ void run_latency_test(int fd, size_t size, int duration)
     {
         uint64_t t1 = now_ns();
 
-        /* send */
+        
         send(fd, buf, size, 0);
 
-        /* recv FULL message (important) */
+      
         size_t recvd = 0;
         while (recvd < size) {
             ssize_t r = recv(fd, buf + recvd, size - recvd, 0);

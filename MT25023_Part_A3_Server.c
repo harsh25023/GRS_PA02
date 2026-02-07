@@ -9,10 +9,6 @@
 #include <string.h>
 #include <errno.h>
 
-/*
-   A3 — ZERO COPY VERSION
-   Uses: sendmsg() + MSG_ZEROCOPY
-*/
 
 typedef struct {
     int fd;
@@ -24,9 +20,6 @@ static int max_threads = 0;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 
-/* =========================
-   recv full message
-   ========================= */
 static int recv_all(int fd, char *buf, size_t n)
 {
     size_t rcv = 0;
@@ -42,24 +35,20 @@ static int recv_all(int fd, char *buf, size_t n)
 }
 
 
-/* =========================
-   Worker thread (one client)
-   ========================= */
+
 static void *handler(void *arg)
 {
     args_t *a = arg;
     int fd = a->fd;
     size_t size = a->size;
 
-    /* REQUIRED BY ASSIGNMENT:
-       8 dynamically allocated heap fields
-    */
+    
     message_t msg;
     msg_init(&msg, size);
 
     char *recvbuf = malloc(size);
 
-    /* scatter/gather iovec */
+    
     struct iovec iov[FIELDS];
 
     for (int i = 0; i < FIELDS; i++) {
@@ -72,20 +61,17 @@ static void *handler(void *arg)
     mh.msg_iov = iov;
     mh.msg_iovlen = FIELDS;
 
-    /*
-       ZERO COPY LOOP
-       Kernel pins pages and NIC DMA reads directly
-    */
+   
     while (1)
     {
-        /* wait for client request */
+        
         if (recv_all(fd, recvbuf, size) < 0)
             break;
 
-        /* ZERO-COPY SEND */
+        
         if (sendmsg(fd, &mh, MSG_ZEROCOPY) < 0) {
             if (errno == EOPNOTSUPP) {
-                /* fallback if kernel doesn't support zerocopy */
+            
                 sendmsg(fd, &mh, 0);
             } else {
                 break;
@@ -107,9 +93,7 @@ static void *handler(void *arg)
 }
 
 
-/* =========================
-   main
-   ========================= */
+
 int main(int argc, char **argv)
 {
     if (argc < 4) {

@@ -8,19 +8,7 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 
-/*
-   A2 ONE-COPY IMPLEMENTATION
 
-   Difference from A1:
-   - NO memcpy packing
-   - sendmsg() sends 8 heap buffers directly
-
-   Eliminated copy:
-   field[i] -> temp_buffer memcpy  (removed)
-
-   Remaining copy:
-   kernel still copies into socket buffer
-*/
 
 typedef struct {
     int fd;
@@ -32,7 +20,7 @@ static int max_threads = 0;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 
-/* safe recv helper */
+
 static int recv_all(int fd, char *buf, size_t n)
 {
     size_t rcv = 0;
@@ -47,9 +35,6 @@ static int recv_all(int fd, char *buf, size_t n)
 }
 
 
-/* =========================
-   THREAD HANDLER
-   ========================= */
 void *handler(void *arg)
 {
     args_t *a = arg;
@@ -57,14 +42,12 @@ void *handler(void *arg)
     int fd = a->fd;
     size_t size = a->size;
 
-    /* REQUIRED: structure with 8 heap buffers */
     message_t msg;
     msg_init(&msg, size);
 
-    /* only used for receiving client data */
+   
     char *rx = malloc(size);
 
-    /* prepare iovec ONCE (pre-registered buffer) */
     struct iovec iov[FIELDS];
     for (int i = 0; i < FIELDS; i++) {
         iov[i].iov_base = msg.field[i];
@@ -77,11 +60,11 @@ void *handler(void *arg)
 
     while (1)
     {
-        /* receive request */
+       
         if (recv_all(fd, rx, size) < 0)
             break;
 
-        /* ONE-COPY SEND */
+        
         if (sendmsg(fd, &mh, 0) < 0)
             break;
     }
@@ -100,9 +83,6 @@ void *handler(void *arg)
 }
 
 
-/* =========================
-   MAIN SERVER
-   ========================= */
 int main(int argc, char **argv)
 {
     if (argc < 4) {
