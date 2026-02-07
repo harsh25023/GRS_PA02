@@ -265,16 +265,4 @@ This performs:
 
 ---
 
-# Submission Checklist
-
-✓ A1 / A2 / A3 code  
-✓ Namespace execution  
-✓ Automated script  
-✓ CSV results  
-✓ Matplotlib plots  
-✓ Final PDF report  
-✓ README  
-
----
-
 
